@@ -43,18 +43,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const isOutOfStock = product.stock === 0
   const averageRating =
-    product.reviews.length > 0
-      ? product.reviews.reduce((acc: number, r) => acc + r.rating, 0) /
-        product.reviews.length
-      : 0
+  product.reviews.length > 0
+    ? product.reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) /
+      product.reviews.length
+    : 0
 
   const mainImage =
     product.thumbnail || product.images?.[0] || '/placeholder.png'
 
-  // Check if user already reviewed
-  const userReview = user
-    ? product.reviews.find((r) => r.userId === user.id)
-    : null
+const userReview = user
+  ? product.reviews.find((r: { userId: string }) => r.userId === user.id)
+  : null
 
   // Check if in wishlist
   const inWishlist = user ? await checkInWishlist(user.id, product.id) : false

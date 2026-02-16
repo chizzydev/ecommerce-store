@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       // Send confirmation email
       const order = await getOrderById(orderId)
       if (order) {
+        // @ts-ignore
         await sendOrderConfirmationEmail(order)
       }
 

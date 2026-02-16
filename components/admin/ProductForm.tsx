@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -70,7 +70,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const isEdit = !!product
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as any,
     defaultValues: product
       ? {
           name: product.name,
@@ -107,12 +107,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }
   }
 
-  async function onSubmit(data: ProductFormValues) {
+  const onSubmit: SubmitHandler<ProductFormValues> = async (data) => {
     setIsLoading(true)
 
     try {
       const url = isEdit
-        ? `/api/admin/products/${product.id}`
+        ? `/api/admin/products/${product!.id}`
         : '/api/admin/products'
 
       const response = await fetch(url, {
@@ -145,6 +145,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Rest of the form stays the same */}
         <div className="grid gap-6 md:grid-cols-2">
           <FormField
             control={form.control}

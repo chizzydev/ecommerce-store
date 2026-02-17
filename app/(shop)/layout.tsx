@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Heart } from 'lucide-react'
+import { Heart, ShoppingCart } from 'lucide-react'
 import { CartButton } from '@/components/cart/CartButton'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
 import { CurrencySelector } from '@/components/ui/CurrencySelector'
+//import { CrispChat } from '@/components/chat/CrispChat'
+import { getCurrentUser } from '@/lib/auth/session'
 
-export default function ShopLayout({
+export default async function ShopLayout({
   children,
 }: {
   children: React.ReactNode
@@ -14,25 +16,48 @@ export default function ShopLayout({
   return (
     <CurrencyProvider>
       <div className="min-h-screen flex flex-col">
-        <header className="border-b">
-          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold">
-              E-Commerce Store
+        <header className="border-b sticky top-0 bg-background z-50">
+          <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-2">
+            {/* Logo */}
+            <Link href="/" className="font-bold text-base whitespace-nowrap shrink-0">
+              E-Commerce
             </Link>
 
-            <nav className="flex items-center gap-4">
-              <Link href="/products" className="hover:underline">
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-4 flex-1 justify-center">
+              <Link href="/products" className="text-sm hover:underline">
                 Products
               </Link>
-              <CurrencySelector />
-              <Button variant="ghost" size="icon" asChild>
+            </nav>
+
+            {/* Right Side Actions */}
+            <div className="flex items-center gap-1">
+              {/* Currency - hidden on smallest screens */}
+              <div className="hidden sm:block">
+                <CurrencySelector />
+              </div>
+
+              {/* Wishlist */}
+              <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
                 <Link href="/wishlist">
-                  <Heart className="h-5 w-5" />
+                  <Heart className="h-4 w-4" />
                 </Link>
               </Button>
+
+              {/* Cart */}
               <CartButton />
+
+              {/* User Menu */}
               <UserMenu />
-            </nav>
+            </div>
+          </div>
+
+          {/* Mobile Bottom Bar - Products link + Currency */}
+          <div className="sm:hidden border-t px-4 py-2 flex items-center justify-between">
+            <Link href="/products" className="text-sm font-medium hover:underline">
+              Products
+            </Link>
+            <CurrencySelector />
           </div>
         </header>
 
@@ -44,6 +69,8 @@ export default function ShopLayout({
           </div>
         </footer>
       </div>
+
+      {/* <CrispChat /> */}
     </CurrencyProvider>
   )
 }

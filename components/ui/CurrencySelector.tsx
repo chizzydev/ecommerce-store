@@ -14,21 +14,22 @@ export function CurrencySelector() {
   const { currency, setCurrency, isLoading } = useCurrency()
 
   if (isLoading) {
-    return (
-      <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md" />
-    )
+    return <div className="w-24 h-8 bg-gray-200 animate-pulse rounded-md" />
   }
 
   return (
-    <Select value={currency} onValueChange={(value) => setCurrency(value as CurrencyCode)}>
-      <SelectTrigger className="w-32">
+    <Select
+      value={currency}
+      onValueChange={(value) => setCurrency(value as CurrencyCode)}
+    >
+      <SelectTrigger className="w-24 h-8 text-xs px-2">
         <SelectValue>
           {SUPPORTED_CURRENCIES[currency].flag} {SUPPORTED_CURRENCIES[currency].code}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
-          <SelectItem key={code} value={code}>
+          <SelectItem key={code} value={code} className="text-sm">
             {info.flag} {info.code} - {info.name}
           </SelectItem>
         ))}

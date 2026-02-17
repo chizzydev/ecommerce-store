@@ -1,17 +1,24 @@
+import { auth } from '@/lib/auth/auth'
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
-  const token = req.cookies.get('auth-token') // or next-auth.session-token
+export default auth((req) => {
+  const isLoggedIn = !!req.auth
   const isAdminPage = req.nextUrl.pathname.startsWith('/admin')
 
-  if (isAdminPage && !token) {
-    return NextResponse.redirect(new URL('/login', req.url))
+  // Protect admin routes
+  if (isAdminPage) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
+
+    if (req.auth?.user?.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
   }
 
   return NextResponse.next()
-}
+})
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*', '/orders/:path*'],
+  matcher: ['/admin', '/admin/:path*', '/orders/:path*',],
 }

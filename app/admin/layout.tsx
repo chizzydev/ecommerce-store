@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { requireAdmin } from '@/lib/auth/session'
+import { getCurrentUser } from '@/lib/auth/session'
 import { Button } from '@/components/ui/button'
 import {
   Package,
@@ -16,10 +16,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await requireAdmin().catch(() => null)
+  // Auth check - redirect if not logged in or not admin
+  const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')
+  }
+
+  if (user.role !== 'ADMIN') {
+    redirect('/')
   }
 
   return (

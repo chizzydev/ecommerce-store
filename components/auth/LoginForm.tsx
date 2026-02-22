@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
- import { getSession } from 'next-auth/react'
+import { getSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -39,38 +39,38 @@ export function LoginForm() {
     },
   })
 
-async function onSubmit(data: LoginFormValues) {
-  setIsLoading(true)
+  async function onSubmit(data: LoginFormValues) {
+    setIsLoading(true)
 
-  try {
-    const result = await signIn('credentials', {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      toast.error('Invalid email or password')
-      return
+      if (result?.error) {
+        toast.error('Invalid email or password')
+        return
+      }
+
+      const session = await getSession()
+
+      toast.success('You have been logged in')
+
+      if (session?.user?.role === 'ADMIN') {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
+
+      router.refresh()
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-
-    const session = await getSession()
-
-    toast.success('You have been logged in')
-
-    if (session?.user?.role === 'ADMIN') {
-      router.push('/admin')
-    } else {
-      router.push('/')
-    }
-
-    router.refresh()
-  } catch {
-    toast.error('Something went wrong. Please try again.')
-  } finally {
-    setIsLoading(false)
   }
-}
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -105,7 +105,16 @@ async function onSubmit(data: LoginFormValues) {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                {/* ADD THIS: Forgot Password Link */}
+                <div className="flex items-center justify-between">
+                  <FormLabel>Password</FormLabel>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <FormControl>
                   <Input
                     type="password"

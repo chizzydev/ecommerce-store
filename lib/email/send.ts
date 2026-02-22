@@ -2,6 +2,8 @@ import { resend, FROM_EMAIL, REPLY_TO_EMAIL } from './resend'
 import OrderConfirmationEmail from '@/emails/OrderConfirmation'
 import ShippingNotificationEmail from '@/emails/ShippingNotification'
 import { formatPrice, formatDate } from '@/lib/utils'
+import { PasswordResetEmail } from './templates/password-reset'
+import { render } from '@react-email/render'
 
 interface Order {
   orderNumber: string
@@ -84,5 +86,42 @@ export async function sendShippingNotificationEmail(
     console.log('Shipping notification email sent:', order.orderNumber)
   } catch (error) {
     console.error('Failed to send shipping notification email:', error)
+  }
+}
+
+export async function sendPasswordResetEmail(
+  email: string,
+  resetLink: string
+) {
+  try {
+    console.log('🔄 Rendering password reset email...')
+    
+    const emailHtml = await render(
+      PasswordResetEmail({
+        resetLink,
+      })
+    )
+
+    console.log('✅ Email HTML rendered successfully')
+    console.log('📧 Sending to:', email)
+    console.log('🔑 Using FROM_EMAIL:', FROM_EMAIL)
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: 'Reset Your Password',
+      html: emailHtml,
+    })
+
+    if (error) {
+      console.error('❌ Resend API error:', error)
+      throw new Error(`Resend error: ${JSON.stringify(error)}`)
+    }
+
+    console.log('✅ Email sent successfully:', data)
+    return data
+  } catch (error) {
+    console.error('❌ Password reset email failed:', error)
+    throw error
   }
 }

@@ -1,6 +1,34 @@
 import { prisma } from '@/lib/db/prisma'
 import { deleteCache } from '@/lib/cache/redis'
 
+// Get all products for admin
+export async function getAllProductsAdmin() {
+  return prisma.product.findMany({
+    include: {
+      category: true,
+      _count: {
+        select: { reviews: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+// Get single product by ID for admin
+export async function getProductByIdAdmin(id: string) {
+  return prisma.product.findUnique({
+    where: { id },
+    include: {
+      category: true,
+      reviews: {
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  })
+}
+
+// Create product
 export async function createProduct(data: any) {
   const product = await prisma.product.create({
     data,
@@ -19,6 +47,7 @@ export async function createProduct(data: any) {
   return product
 }
 
+// Update product
 export async function updateProduct(id: string, data: any) {
   const product = await prisma.product.findUnique({
     where: { id },
@@ -48,6 +77,7 @@ export async function updateProduct(id: string, data: any) {
   return updated
 }
 
+// Delete product
 export async function deleteProduct(id: string) {
   const product = await prisma.product.findUnique({
     where: { id },

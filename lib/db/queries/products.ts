@@ -80,3 +80,48 @@ function serializeProduct(product: any) {
     price: product.price.toString(),
   }
 }
+
+// Search products
+export async function searchProducts(params: {
+  query?: string
+  categoryId?: string
+  minPrice?: number
+  maxPrice?: number
+  sortBy?: string
+}) {
+  const { query, categoryId, minPrice, maxPrice, sortBy } = params
+
+  const where: any = {
+    isActive: true,
+  }
+
+  if (query) {
+    where.OR = [
+      { name: { contains: query, mode: 'insensitive' } },
+      { description: { contains: query, mode: 'insensitive' } },
+    ]
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {}
+    if (minPrice !== undefined) where.price.gte = minPrice
+    if (maxPrice !== undefined) where.price.lte = maxPrice
+  }
+
+  let orderBy: any = { createdAt: 'desc' }
+  if (sortBy === 'price-asc') orderBy = { price: 'asc' }
+  if (sortBy === 'price-desc') orderBy = { price: 'desc' }
+  if (sortBy === 'name') orderBy = { name: 'asc' }
+
+  const products = await prisma.product.findMany({
+    where,
+    include: { category: true },
+    orderBy,
+  })
+
+  return products.map(serializeProduct)
+}

@@ -5,16 +5,20 @@ const CACHE_TTL = 600 // 10 minutes
 
 export async function getCategories() {
   const cacheKey = 'categories:all'
-  
-  try {
-    const cached = await redis.get(cacheKey)
-    if (cached) {
-      return JSON.parse(cached as string)
+
+  // Try Redis first (only if available)
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey)
+      if (cached) {
+        return JSON.parse(cached)
+      }
+    } catch (error) {
+      console.error('Redis error (getCategories):', error)
     }
-  } catch (error) {
-    console.error('Redis error:', error)
   }
 
+  // Fetch from database
   const categories = await prisma.category.findMany({
     include: {
       _count: {
@@ -28,10 +32,13 @@ export async function getCategories() {
     orderBy: { name: 'asc' },
   })
 
-  try {
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(categories))
-  } catch (error) {
-    console.error('Redis cache error:', error)
+  // Cache result if Redis exists
+  if (redis) {
+    try {
+      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(categories))
+    } catch (error) {
+      console.error('Redis cache error (getCategories):', error)
+    }
   }
 
   return categories
@@ -39,16 +46,20 @@ export async function getCategories() {
 
 export async function getCategoryBySlug(slug: string) {
   const cacheKey = `category:slug:${slug}`
-  
-  try {
-    const cached = await redis.get(cacheKey)
-    if (cached) {
-      return JSON.parse(cached as string)
+
+  // Try Redis first (only if available)
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey)
+      if (cached) {
+        return JSON.parse(cached)
+      }
+    } catch (error) {
+      console.error('Redis error (getCategoryBySlug):', error)
     }
-  } catch (error) {
-    console.error('Redis error:', error)
   }
 
+  // Fetch from database
   const category = await prisma.category.findUnique({
     where: { slug },
     include: {
@@ -62,11 +73,12 @@ export async function getCategoryBySlug(slug: string) {
     },
   })
 
-  if (category) {
+  // Cache only if found and Redis exists
+  if (category && redis) {
     try {
       await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(category))
     } catch (error) {
-      console.error('Redis cache error:', error)
+      console.error('Redis cache error (getCategoryBySlug):', error)
     }
   }
 

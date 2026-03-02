@@ -1,7 +1,7 @@
 import Redis from "ioredis"
 
 declare global {
-  var redis: Redis | undefined
+  var redis: Redis | undefined | null
 }
 
 let redisClient: Redis | null = null
@@ -12,13 +12,16 @@ try {
       global.redis ??
       new Redis(process.env.REDIS_URL, {
         maxRetriesPerRequest: 1, // Fail fast
-        connectTimeout: 5000, // 5 second timeout
+        connectTimeout: 3000,
         lazyConnect: true,
+        retryStrategy: () => null, // Don't retry on failure
       })
 
     if (process.env.NODE_ENV !== "production") {
       global.redis = redisClient
     }
+  } else {
+    console.warn('REDIS_URL not set, running without cache')
   }
 } catch (error) {
   console.warn('Redis connection failed, running without cache:', error)
@@ -27,14 +30,14 @@ try {
 
 export const redis = redisClient
 
-// Helper function with fallback
-export async function getCached<T>(
+// ---------- Safe cache helper with fallback ----------
+export async function getCachedData<T>(
   key: string,
   fetcher: () => Promise<T>,
   ttl: number = 3600
 ): Promise<T> {
+  // No Redis? Just fetch directly
   if (!redis) {
-    // No Redis, just fetch directly
     return fetcher()
   }
 
@@ -44,11 +47,12 @@ export async function getCached<T>(
       return JSON.parse(cached)
     }
   } catch (error) {
-    console.warn('Redis get failed, fetching fresh data:', error)
+    console.warn('Redis get failed, fetching fresh:', error)
   }
 
   const fresh = await fetcher()
 
+  // Try to cache, but don't fail if Redis is down
   try {
     await redis.setex(key, ttl, JSON.stringify(fresh))
   } catch (error) {
@@ -58,16 +62,12 @@ export async function getCached<T>(
   return fresh
 }
 
-// Helper to safely delete cache
-export async function deleteCache(key: string | string[]) {
+// Safe delete helper
+export async function deleteCacheKeys(...keys: string[]): Promise<void> {
   if (!redis) return
 
   try {
-    if (Array.isArray(key)) {
-      await Promise.all(key.map(k => redis!.del(k)))
-    } else {
-      await redis.del(key)
-    }
+    await Promise.all(keys.map(key => redis!.del(key)))
   } catch (error) {
     console.warn('Redis delete failed:', error)
   }

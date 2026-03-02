@@ -3,7 +3,7 @@ import { deleteCache } from '@/lib/cache/redis'
 
 // Get all products for admin
 export async function getAllProductsAdmin() {
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     include: {
       category: true,
       _count: {
@@ -12,11 +12,17 @@ export async function getAllProductsAdmin() {
     },
     orderBy: { createdAt: 'desc' },
   })
+
+  // Convert Decimal to number
+  return products.map(product => ({
+    ...product,
+    price: Number(product.price),
+  }))
 }
 
 // Get single product by ID for admin
 export async function getProductByIdAdmin(id: string) {
-  return prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id },
     include: {
       category: true,
@@ -26,6 +32,14 @@ export async function getProductByIdAdmin(id: string) {
       },
     },
   })
+
+  if (!product) return null
+
+  // Convert Decimal to number for form compatibility
+  return {
+    ...product,
+    price: Number(product.price),
+  }
 }
 
 // Create product
@@ -44,7 +58,10 @@ export async function createProduct(data: any) {
     `products:category:${data.categoryId}`,
   ])
 
-  return product
+  return {
+    ...product,
+    price: Number(product.price),
+  }
 }
 
 // Update product
@@ -74,7 +91,10 @@ export async function updateProduct(id: string, data: any) {
     `products:category:${product.categoryId}`,
   ])
 
-  return updated
+  return {
+    ...updated,
+    price: Number(updated.price),
+  }
 }
 
 // Delete product
